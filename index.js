@@ -89,15 +89,13 @@ function getBookingsForRoom(room, building, startDate, endDate) {
   }).then(body => cheerio.load(body))
     .then($ => {
 
-      var dailyBookings = $(".room")
-          .toArray()
+      var dailyBookings = $(".room").toArray()
           .map(extractBookingsFromTable);
 
-      var dates = $(".room").prev()
-          .toArray()
+      var dates = $(".room").prev().toArray()
           .map(extractText);
 
-      var allBookings = _.zipWith(dates, dailyBookings, function(date, bookings) {
+      var bookingsWithDates = _.zipWith(dates, dailyBookings, function(date, bookings) {
         return {
           date: moment(date, "dddd D MMMM YYYY").toDate(),
           bookings: bookings.map(booking => parseBooking(date, booking))
@@ -107,7 +105,7 @@ function getBookingsForRoom(room, building, startDate, endDate) {
       return {
         room: room,
         building: building,
-        bookings: allBookings
+        bookingsByDay: bookingsWithDates
       }
     });
 }
