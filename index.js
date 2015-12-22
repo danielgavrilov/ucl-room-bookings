@@ -6,82 +6,120 @@ var moment = require("moment");
 
 var $ = cheerio.load("");
 
-var roomsColumnNames = ["name", "size", "type", "diaryLink", "infoLink", "photoLink"];
+
+/*
+Given any element, it only extracts its text contents, removing leading & trailing
+spaces, newlines and tabs, which frequenly appear for some reason.
+*/
+function extractText(elem) {
+  return $(elem).text().replace(/[\r\n\t]/g,"").trim();
+}
+
+/*
+Given a table element, it extracts table cell elements in rows:
+
+    [
+      [ <th>, <th>, <th> ],
+      [ <td>, <td>, <td> ],
+      [ ... ]
+    ]
+*/
+function extractTableCells(tableElement) {
+  return $(tableElement).find("tr")
+    .toArray()
+    .map(elem => {
+      return $(elem).find("td, th")
+        .toArray()
+    });
+}
+
 var bookingsColumnNames = ["start", "finish", "description", "contact", "telephone"];
-
-// var rooms = request("https://roombooking.ucl.ac.uk/rb/bookableSpace/viewAllBookableSpace.html")
-//   .then(body => cheerio.load(body))
-//   .then($ => {
-//     return $(".rooms").find("tr")
-//       .toArray()
-//       .slice(1)
-//       .map(elem => extractRowElems(roomsColumnNames, elem))
-//       .map(extractRoom);
-//   })
-//   .then(console.log)
-
-var bookings = request({
-  uri: "https://roombooking.ucl.ac.uk/rb/bookableSpace/roomDiary.html?room=G29&building=016&invoker=EFD",
-  method: "POST",
-  form: {
-    dateSpecifier: "dateRange",
-    startDate: "21/12/2015",
-    endDate: "31/12/2015"
-  }
-})
-  .then(body => cheerio.load(body))
-  .then($ => {
-
-    var bookings = $(".room")
-        .toArray()
-        .map(extractBooking)
-
-    var dates = $(".room").prev()
-        .toArray()
-        .map(extractText)
-
-    return _.zipObject(dates, bookings);
-  })
-  .then(console.log)
-
-
-var Booking = {
-
-};
-
-function getAllRooms() {}
-function getAllBookings(start, end) {}
-
-function getBookingsForRoom(room, start, end) {
-  return [{
-    day: Date,
-    bookings: [Booking]
-  }];
+function extractBookingsFromTable(tableElement) {
+  return extractTableCells(tableElement)
+    .slice(1) // remove header row
+    .map(cells => {
+      // only keep the text from all cells, no other data needed.
+      var cellData = cells.map(extractText);
+      return _.zipObject(bookingsColumnNames, cellData);
+    });
 }
 
-function extractRowElems(columnNames, elem) {
-  var row = $(elem).find("td");
-  return _.zipObject(columnNames, row);
+function parseBooking(dateString, booking) {
+  booking.start  = moment(`${dateString} ${booking.start}`,  "dddd D MMMM YYYY HH:mm").toDate();
+  booking.finish = moment(`${dateString} ${booking.finish}`, "dddd D MMMM YYYY HH:mm").toDate();
+  return booking;
 }
 
-function extractRoom(d) {
-  var roomLink = $(d.diaryLink).find("a").attr("href");
+var roomsColumnNames = ["name", "size", "type", "diaryLink", "infoLink", "photoLink"];
+function extractRoomsFromTable(tableElement) {
+  return extractTableCells(tableElement)
+    .slice(1) // remove header row
+    .map(cells => _.zipObject(roomsColumnNames, cells))
+    .map(extractRoom);
+}
+
+function extractRoom(room) {
+  var roomLink = $(room.diaryLink).find("a").attr("href");
   var query = url.parse(roomLink, true).query;
   return {
-    name: $(d.name).text(),
-    type: $(d.type).text(),
-    size: +$(d.size).text(),
+    name: extractText(room.name),
+    type: extractText(room.type),
+    size: +extractText(room.size),
     room: query.room,
     building: query.building
   };
 }
 
-function extractBooking(date, d) {
-  d.start = moment(`${date} ${d.start}`).toDate();
-  d.finish = moment(`${date} ${d.finish}`).toDate();
-  return d;
+
+function getAllRooms() {
+  return request("https://roombooking.ucl.ac.uk/rb/bookableSpace/viewAllBookableSpace.html")
+    .then(body => cheerio.load(body))
+    .then($ => extractRoomsFromTable($(".rooms")[0]))
 }
 
-function extractText(elem) {
-  return $(elem).text().replace(/[\r\n\t]/g,"").trim();
+function getBookingsForRoom(room, building, startDate, endDate) {
+  return request({
+    uri: `https://roombooking.ucl.ac.uk/rb/bookableSpace/roomDiary.html?room=${room}&building=${building}&invoker=EFD`,
+    method: "POST",
+    form: {
+      dateSpecifier: "dateRange",
+      startDate: startDate,
+      endDate: endDate
+    }
+  }).then(body => cheerio.load(body))
+    .then($ => {
+
+      var dailyBookings = $(".room")
+          .toArray()
+          .map(extractBookingsFromTable);
+
+      var dates = $(".room").prev()
+          .toArray()
+          .map(extractText);
+
+      var allBookings = _.zipWith(dates, dailyBookings, function(date, bookings) {
+        return {
+          date: moment(date, "dddd D MMMM YYYY").toDate(),
+          bookings: bookings.map(booking => parseBooking(date, booking))
+        };
+      });
+
+      return {
+        room: room,
+        building: building,
+        bookings: allBookings
+      }
+    });
 }
+
+function getBookingsForAllRooms(startDate, endDate) {
+  return getAllRooms()
+    .then(rooms => Promise.all(
+      rooms.map(room => getBookingsForRoom(
+        room.room, room.building, startDate, endDate
+      ))
+    ))
+}
+
+getBookingsForAllRooms("22/12/2015", "22/12/2015")
+  .then(console.log);
