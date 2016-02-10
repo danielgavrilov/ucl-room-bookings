@@ -119,5 +119,6 @@ function getBookingsForAllRooms(startDate, endDate) {
     ))
 }
 
-getBookingsForAllRooms("22/12/2015", "22/12/2015")
-  .then(console.log);
+exports.getAllRooms = getAllRooms;
+exports.getBookingsForRoom = getBookingsForRoom;
+exports.getBookingsForAllRooms = getBookingsForAllRooms;
