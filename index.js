@@ -78,6 +78,9 @@ function getAllRooms() {
 }
 
 function getBookingsForRoom(room, building, startDate, endDate) {
+  if (endDate === undefined) {
+    endDate = startDate;
+  }
   return request({
     uri: `https://roombooking.ucl.ac.uk/rb/bookableSpace/roomDiary.html?room=${room}&building=${building}&invoker=EFD`,
     method: "POST",
@@ -111,6 +114,9 @@ function getBookingsForRoom(room, building, startDate, endDate) {
 }
 
 function getBookingsForAllRooms(startDate, endDate) {
+  if (endDate === undefined) {
+    endDate = startDate;
+  }
   return getAllRooms()
     .then(rooms => Promise.all(
       rooms.map(room => getBookingsForRoom(
