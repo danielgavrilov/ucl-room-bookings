@@ -27,7 +27,7 @@ scraper.getAllRooms().then(console.log)
 
 scraper.getBookingsForRoom("B15B", "016", "11/02/2016", "13/02/2016").then(console.log)
 
-// Gets bookings for 11-12 Feb 2016 (inclusive) for Anatomy B15:
+// Gets bookings for 11-13 Feb 2016 (inclusive) for Anatomy B15:
 //
 // > { room: 'B15B',
 //   building: '016',
