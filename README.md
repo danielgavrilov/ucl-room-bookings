@@ -4,9 +4,17 @@ This script scrapes room bookings from [UCL Estates](https://roombooking.ucl.ac.
 
 ## Usage
 
+Install package by running:
+
+```
+npm install danielgavrilov/ucl-room-bookings
+```
+
+Some examples:
+
 ```javascript
 
-var scraper = require("./index");
+var scraper = require("ucl-room-bookings");
 
 scraper.getAllRooms().then(console.log)
 
