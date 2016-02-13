@@ -1,7 +1,7 @@
 {
-  "name": "room-bookings",
-  "version": "0.0.1",
-  "description": "",
+  "name": "ucl-room-bookings",
+  "version": "0.1.0",
+  "description": "A web scraper for UCL Estates room bookings",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
