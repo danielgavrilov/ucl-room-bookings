@@ -37,10 +37,7 @@ scraper.getBookingsForRoom("B15B", "016", "11/02/2016", "13/02/2016").then(conso
 
 // Gets bookings for 11-13 Feb 2016 (inclusive) for Anatomy B15:
 //
-// > { room: 'B15B',
-//   building: '016',
-//   bookingsByDay:
-//    [ { date: Thu Feb 11 2016 00:00:00 GMT+0000 (GMT),
+// > [ { date: Thu Feb 11 2016 00:00:00 GMT+0000 (GMT),
 //        bookings:
 //         [ { start: Thu Feb 11 2016 08:00:00 GMT+0000 (GMT),
 //             finish: Thu Feb 11 2016 08:30:00 GMT+0000 (GMT),
@@ -57,7 +54,7 @@ scraper.getBookingsForRoom("B15B", "016", "11/02/2016", "13/02/2016").then(conso
 //      { date: Fri Feb 12 2016 00:00:00 GMT+0000 (GMT),
 //        bookings: [Array] },
 //      { date: Sat Feb 13 2016 00:00:00 GMT+0000 (GMT),
-//        bookings: [Array] } ] }
+//        bookings: [Array] } ]
 
 scraper.getBookingsForAllRooms("11/02/2016").then(console.log)
 

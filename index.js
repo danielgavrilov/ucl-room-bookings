@@ -98,31 +98,28 @@ function getBookingsForRoom(room, building, startDate, endDate) {
       var dates = $(".room").prev().toArray()
           .map(extractText);
 
-      var bookingsWithDates = _.zipWith(dates, dailyBookings, function(date, bookings) {
+      var bookingsByDay = _.zipWith(dates, dailyBookings, function(date, bookings) {
         return {
           date: moment(date, "dddd D MMMM YYYY").toDate(),
           bookings: bookings.map(booking => parseBooking(date, booking))
         };
       });
 
-      return {
-        room: room,
-        building: building,
-        bookingsByDay: bookingsWithDates
-      }
+      return bookingsByDay;
     });
 }
 
 function getBookingsForAllRooms(startDate, endDate) {
-  if (endDate === undefined) {
-    endDate = startDate;
-  }
-  return getAllRooms()
-    .then(rooms => Promise.all(
-      rooms.map(room => getBookingsForRoom(
-        room.room, room.building, startDate, endDate
-      ))
-    ))
+  return getAllRooms().then(rooms => Promise.all(rooms.map(
+    room => getBookingsForRoom(room.room, room.building, startDate, endDate).then(bookingsByDay => {
+      return {
+        name: room.name,
+        room: room.room,
+        building: room.building,
+        bookingsByDay: bookingsByDay
+      }
+    }
+  ))));
 }
 
 exports.getAllRooms = getAllRooms;
